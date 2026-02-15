@@ -1,28 +1,223 @@
 <template>
-    <lightning-card title="Flow Doctor AI" icon-name="custom:custom91">
+    <lightning-card title="Flow AI Debugger" icon-name="custom:custom91">
         <div slot="actions">
-            <lightning-button 
-                label="Refresh" 
-                onclick={handleRefresh}
-                icon-name="utility:refresh">
-            </lightning-button>
+            <lightning-button-group>
+                <lightning-button
+                    label="Refresh"
+                    onclick={handleRefresh}
+                    icon-name="utility:refresh">
+                </lightning-button>
+            </lightning-button-group>
         </div>
-        
+
         <div class="slds-p-around_medium">
+            <!-- Summary Stats Bar -->
+            <template if:true={hasErrors}>
+                <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="slds-box slds-theme_shade slds-text-align_center">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Total Errors</p>
+                            <p class="slds-text-heading_large">{totalErrorCount}</p>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="slds-box slds-theme_shade slds-text-align_center">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Critical</p>
+                            <p class="slds-text-heading_large slds-text-color_error">{criticalCount}</p>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="slds-box slds-theme_shade slds-text-align_center">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">AI Analyzed</p>
+                            <p class="slds-text-heading_large">{analyzedCount}</p>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="slds-box slds-theme_shade slds-text-align_center">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Resolved</p>
+                            <p class="slds-text-heading_large slds-text-color_success">{resolvedCount}</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Error List Table -->
             <template if:true={hasErrors}>
                 <lightning-datatable
                     key-field="Id"
                     data={errors}
                     columns={columns}
-                    hide-checkbox-column>
+                    hide-checkbox-column
+                    show-row-number-column
+                    onrowaction={handleRowAction}
+                    sorted-by={sortedBy}
+                    sorted-direction={sortedDirection}
+                    onsort={handleSort}
+                    max-row-selection="1">
                 </lightning-datatable>
             </template>
-            
+
+            <!-- Empty State -->
             <template if:false={hasErrors}>
-                <div class="slds-align_absolute-center slds-p-around_large">
-                    <p class="slds-text-color_weak">No errors found. Your Flows are running smoothly!</p>
+                <div class="slds-illustration slds-illustration_small slds-text-align_center slds-p-around_x-large">
+                    <lightning-icon icon-name="utility:success" size="large" variant="success"></lightning-icon>
+                    <h3 class="slds-text-heading_medium slds-m-top_medium">All Clear!</h3>
+                    <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                        No Flow errors found. Your automations are running smoothly.
+                    </p>
                 </div>
             </template>
         </div>
     </lightning-card>
+
+    <!-- AI Analysis Detail Modal -->
+    <template if:true={showAnalysisModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            onclick={closeAnalysisModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="Close" size="small"
+                                        variant="inverse"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">
+                        <lightning-icon icon-name="utility:einstein" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        AI Analysis: {selectedErrorName}
+                    </h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" style="min-height: 400px;">
+                    <template if:true={isLoadingAnalysis}>
+                        <div class="slds-align_absolute-center slds-p-around_large">
+                            <lightning-spinner alternative-text="Loading analysis..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isLoadingAnalysis}>
+                        <template if:true={analysis}>
+                            <!-- Confidence Badge -->
+                            <div class="slds-m-bottom_medium">
+                                <span class={confidenceBadgeClass}>
+                                    Confidence: {analysis.Confidence_Score__c}%
+                                </span>
+                                <template if:true={analysis.Pattern_Detected__c}>
+                                    <span class="slds-badge slds-badge_inverse slds-m-left_x-small">
+                                        Pattern Detected
+                                    </span>
+                                </template>
+                                <template if:true={analysis.Root_Cause_Category__c}>
+                                    <span class="slds-badge slds-theme_warning slds-m-left_x-small">
+                                        {analysis.Root_Cause_Category__c}
+                                    </span>
+                                </template>
+                            </div>
+
+                            <!-- Root Cause -->
+                            <div class="slds-section slds-is-open slds-m-bottom_small">
+                                <h3 class="slds-section__title">
+                                    <span class="slds-truncate slds-p-horizontal_small" title="Root Cause">
+                                        <lightning-icon icon-name="utility:bug" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Root Cause
+                                    </span>
+                                </h3>
+                                <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                    <p>{analysis.Root_Cause__c}</p>
+                                </div>
+                            </div>
+
+                            <!-- Immediate Action -->
+                            <div class="slds-section slds-is-open slds-m-bottom_small">
+                                <h3 class="slds-section__title">
+                                    <span class="slds-truncate slds-p-horizontal_small" title="Immediate Action">
+                                        <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Immediate Action
+                                    </span>
+                                </h3>
+                                <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                    <p>{analysis.Immediate_Action__c}</p>
+                                </div>
+                            </div>
+
+                            <!-- Fix Steps -->
+                            <template if:true={analysis.Fix_Steps__c}>
+                                <div class="slds-section slds-is-open slds-m-bottom_small">
+                                    <h3 class="slds-section__title">
+                                        <span class="slds-truncate slds-p-horizontal_small" title="Fix Steps">
+                                            <lightning-icon icon-name="utility:steps" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                            Fix Steps
+                                        </span>
+                                    </h3>
+                                    <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                        <p style="white-space: pre-wrap;">{analysis.Fix_Steps__c}</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Long Term Fix -->
+                            <div class="slds-section slds-is-open slds-m-bottom_small">
+                                <h3 class="slds-section__title">
+                                    <span class="slds-truncate slds-p-horizontal_small" title="Long Term Fix">
+                                        <lightning-icon icon-name="utility:strategy" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Long Term Fix
+                                    </span>
+                                </h3>
+                                <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                    <p>{analysis.Long_Term_Fix__c}</p>
+                                </div>
+                            </div>
+
+                            <!-- User Impact -->
+                            <template if:true={analysis.User_Impact_Description__c}>
+                                <div class="slds-section slds-is-open slds-m-bottom_small">
+                                    <h3 class="slds-section__title">
+                                        <span class="slds-truncate slds-p-horizontal_small" title="User Impact">
+                                            <lightning-icon icon-name="utility:user" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                            User Impact
+                                        </span>
+                                    </h3>
+                                    <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                        <p>{analysis.User_Impact_Description__c}</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Test Scenario -->
+                            <template if:true={analysis.Test_Scenario__c}>
+                                <div class="slds-section slds-is-open slds-m-bottom_small">
+                                    <h3 class="slds-section__title">
+                                        <span class="slds-truncate slds-p-horizontal_small" title="Test Scenario">
+                                            <lightning-icon icon-name="utility:checkin" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                            Test Scenario
+                                        </span>
+                                    </h3>
+                                    <div class="slds-section__content slds-p-around_small slds-theme_shade">
+                                        <p>{analysis.Test_Scenario__c}</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+
+                        <template if:false={analysis}>
+                            <div class="slds-align_absolute-center slds-p-around_large">
+                                <p class="slds-text-color_weak">No AI analysis available yet for this error.</p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <template if:true={analysis}>
+                        <template if:true={analysis.Documentation_URL__c}>
+                            <lightning-button label="View Documentation" variant="neutral"
+                                            onclick={openDocumentation} class="slds-m-right_x-small">
+                            </lightning-button>
+                        </template>
+                    </template>
+                    <lightning-button label="Close" variant="brand" onclick={closeAnalysisModal}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>

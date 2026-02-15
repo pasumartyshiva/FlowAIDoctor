@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>richTextValue</name>
+                    <value>&lt;p&gt;&lt;b style="font-size: 14px;"&gt;Flow AI Debugger&lt;/b&gt;&lt;/p&gt;&lt;p&gt;AI-powered monitoring and diagnosis of Salesforce Flow errors. Errors are captured in real-time and analyzed by Einstein LLM to identify root causes, recommend fixes, and detect patterns.&lt;/p&gt;</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:richText</componentName>
+                <identifier>flexipage_richText1</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>c:flowDoctorDashboard</componentName>
+                <identifier>c_flowDoctorDashboard1</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>Flow AI Debugger</masterLabel>
+    <template>
+        <name>flexipage:defaultAppHomeTemplate</name>
+    </template>
+    <type>AppPage</type>
+</FlexiPage>

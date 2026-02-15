@@ -84,7 +84,7 @@ public with sharing class FlowDoctorAIService {
         String prompt = '';
 
         // ── System-level instruction ──
-        prompt += 'You are Flow Doctor AI, an expert Salesforce Flow debugger and diagnostician. ';
+        prompt += 'You are Flow AI Debugger, an expert Salesforce Flow debugger and diagnostician. ';
         prompt += 'You have deep knowledge of Salesforce Flow architecture, Apex, SOQL, DML, ';
         prompt += 'governor limits, sharing rules, field-level security, record-triggered flows, ';
         prompt += 'screen flows, scheduled flows, platform events, and process automation best practices.\n\n';
