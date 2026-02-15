@@ -1,0 +1,18 @@
+# Salesforce
+.sfdx/
+.sf/
+.localdevserver/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Temp
+/tmp/
+
+# Shell script artifacts
+{classes,triggers,objects,lwc,tabs,applications,flexipages,permissionsets,platformEvents,prompts}/

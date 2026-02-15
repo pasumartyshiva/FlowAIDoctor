@@ -1,0 +1,28 @@
+<template>
+    <lightning-card title="Flow Doctor AI" icon-name="custom:custom91">
+        <div slot="actions">
+            <lightning-button 
+                label="Refresh" 
+                onclick={handleRefresh}
+                icon-name="utility:refresh">
+            </lightning-button>
+        </div>
+        
+        <div class="slds-p-around_medium">
+            <template if:true={hasErrors}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={errors}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
+            </template>
+            
+            <template if:false={hasErrors}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <p class="slds-text-color_weak">No errors found. Your Flows are running smoothly!</p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
