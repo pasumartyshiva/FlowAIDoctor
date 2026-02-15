@@ -4,7 +4,7 @@
     <deleteConstraint>SetNull</deleteConstraint>
     <label>User</label>
     <referenceTo>User</referenceTo>
-    <relationshipName>Flow_Error_Logs</relationshipName>
+    <relationshipName>Flow_Error_Logs_v2</relationshipName>
     <required>false</required>
     <type>Lookup</type>
 </CustomField>
